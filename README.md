@@ -1,5 +1,9 @@
 # kafka-lag-lab
 
+---
+![](visuality.png)
+---
+
 A Kafka consumer-lag bottleneck lab: reproduce real causes of growing
 consumer lag on purpose, watch them happen, then fix them — all against a
 real, running Kafka cluster.
