@@ -1,0 +1,73 @@
+# ============================================================
+# kafka-lag-lab — Sprint 1
+# Kafka in KRaft mode (no ZooKeeper) + explicit topic creation
+# Confluent cp-kafka 8.0.0 (Apache Kafka 4.x)
+#
+# Usage:
+#   docker compose up -d       — start Kafka + create topic
+#   docker compose down -v     — stop and wipe data (fresh start)
+#   docker compose logs -f kafka — tail broker logs
+#
+# Your Java apps (running on the host) connect on: localhost:9092
+# ============================================================
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:8.0.0
+    container_name: kafka-lag-lab-kafka
+    ports:
+      - "9092:9092"    # external — your Java apps connect here
+      - "19092:19092"  # internal broker-to-broker traffic
+      - "9099:9099"    # KRaft controller port
+    environment:
+      # ---- KRaft cluster identity ----
+      CLUSTER_ID: "kafka-lag-lab-cluster"
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # ---- Listener configuration ----
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9099
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9099"
+
+      # ---- Replication / transactions (single node = factor 1) ----
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      # ---- Convenience settings ----
+      # JUNIOR NOTE: we turn auto-create OFF here on purpose — we create the
+      # topic explicitly below with a fixed partition count. Auto-create would
+      # give Kafka's default (often 1 partition), which defeats the point of
+      # this project: we WANT to control partition count deliberately.
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+      KAFKA_LOG_RETENTION_HOURS: 2
+
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:19092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # JUNIOR NOTE: this container runs ONCE, creates the topic, then exits.
+  # `depends_on: condition: service_healthy` means it waits for Kafka's
+  # healthcheck above to pass before trying — otherwise it'd race the broker.
+  topic-init:
+    image: confluentinc/cp-kafka:8.0.0
+    container_name: kafka-lag-lab-topic-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["bash", "-c"]
+    command:
+      - |
+        kafka-topics --bootstrap-server kafka:19092 \
+          --create --if-not-exists \
+          --topic lag-lab-events \
+          --partitions 6 \
+          --replication-factor 1
+        echo "Topic 'lag-lab-events' ready with 6 partitions."

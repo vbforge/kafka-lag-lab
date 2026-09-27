@@ -1,0 +1,24 @@
+# ============================================================
+# kafka-lag-lab — .gitignore
+# ============================================================
+
+# --- Maven build output ---
+target/
+dependency-reduced-pom.xml
+
+# --- IDE (IntelliJ) ---
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# --- Personal working notes — not part of the public project ---
+documentation/
+
+# --- Runtime artifacts generated while running scenarios ---
+consumer.log
+*.log
+
+# --- OS noise ---
+.DS_Store
+Thumbs.db

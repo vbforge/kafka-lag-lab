@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+          kafka-lag-lab — parent POM
+          JUNIOR NOTE: packaging="pom" means this file itself builds nothing —
+          it just declares shared config and lists the child modules to build.
+        -->
+    <groupId>com.vbforge</groupId>
+    <artifactId>kafka-lag-lab</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <modules>
+        <module>producer</module>
+        <module>consumer</module>
+        <module>diagnose</module>
+    </modules>
+
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- JUNIOR NOTE: matches cp-kafka 8.0.0 = Apache Kafka 4.0.x -->
+        <kafka-clients.version>4.1.2</kafka-clients.version>
+<!--        <slf4j.version>2.0.16</slf4j.version>-->
+
+    </properties>
+
+</project>
+
